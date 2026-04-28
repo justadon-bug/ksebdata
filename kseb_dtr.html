@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kerala Distribution Transformers — A Field Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300;9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --ink: #14110f;
+    --ink-soft: #5a544c;
+    --ink-faint: #a09a90;
+    --rule: #d8d2c5;
+    --accent: #1e3a5f;
+    --accent-soft: #4a6a8a;
+    --warn: #c8612a;
+    --warn-soft: #e8a878;
+    --good: #4a7c4e;
+    --bg-card: #ebe6da;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.5;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 48px; position: relative; z-index: 2; }
+  .num { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum'; }
+  .display { font-family: 'Fraunces', serif; font-variation-settings: 'opsz' 144, 'SOFT' 30; }
+
+  /* === MASTHEAD === */
+  .masthead {
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    margin-top: 32px;
+    padding: 16px 0 12px;
+  }
+  .masthead-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+  }
+  .masthead-title {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'wght' 400, 'SOFT' 50;
+    font-size: clamp(48px, 9vw, 128px);
+    line-height: 0.92;
+    letter-spacing: -0.025em;
+    margin: 32px 0 24px;
+    font-style: italic;
+  }
+  .masthead-title em {
+    font-style: normal;
+    font-variation-settings: 'opsz' 144, 'wght' 700, 'SOFT' 50;
+  }
+  .masthead-deck {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 24, 'wght' 300;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    max-width: 720px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* === HEADLINE STATS === */
+  .topline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 0 -1px;
+  }
+  .topline-cell {
+    background: var(--paper);
+    padding: 32px 24px 28px;
+  }
+  .topline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+  }
+  .topline-value {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'wght' 500;
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .topline-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* === SECTION === */
+  section { padding: 80px 0 40px; border-bottom: 1px solid var(--rule); }
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .section-tag::before { content: '§ '; }
+  .section-h {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 96, 'wght' 400, 'SOFT' 30;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.018em;
+    margin-bottom: 16px;
+    max-width: 800px;
+  }
+  .section-h em {
+    font-style: italic;
+    font-variation-settings: 'opsz' 96, 'wght' 400, 'SOFT' 80;
+  }
+  .section-lede {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 18, 'wght' 300;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin-bottom: 48px;
+  }
+
+  /* === DISTRICT BARS === */
+  .district-list { margin-top: 24px; }
+  .district-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 100px 100px 100px;
+    gap: 24px;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+    align-items: center;
+    cursor: pointer;
+    transition: background 180ms ease;
+  }
+  .district-row:hover { background: var(--bg-card); }
+  .district-row:last-child { border-bottom: 1px solid var(--rule); }
+  .district-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-right: 12px;
+  }
+  .district-name {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 36, 'wght' 500;
+    font-size: 22px;
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: baseline;
+  }
+  .district-bar {
+    height: 24px;
+    background: var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+  .district-bar-fill {
+    height: 100%;
+    background: var(--ink);
+    transition: width 800ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .district-bar-grid {
+    position: absolute;
+    height: 100%;
+    background: var(--accent);
+    top: 0; left: 0;
+    transition: width 800ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .district-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-align: right;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .district-num small {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  .legend {
+    display: flex; gap: 24px; margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .legend i { width: 14px; height: 14px; display: inline-block; }
+  .swatch-cap { background: var(--rule); }
+  .swatch-grid { background: var(--accent); }
+  .swatch-ink { background: var(--ink); }
+
+  /* === CALLOUT === */
+  .callout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    margin: 56px 0 0;
+    border: 1px solid var(--rule);
+  }
+  .callout-cell {
+    background: var(--paper);
+    padding: 32px 28px;
+  }
+  .callout-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 14px;
+  }
+  .callout-num {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'wght' 500;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .callout-num.warn { color: var(--warn); }
+  .callout-num.good { color: var(--good); }
+  .callout-num.accent { color: var(--accent); }
+  .callout-text {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 16, 'wght' 300;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  /* === TOP SECTIONS LIST === */
+  .ranking {
+    display: grid;
+    grid-template-columns: 50px 1fr 140px 80px 80px 100px;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+    align-items: center;
+    font-size: 14px;
+  }
+  .ranking-rank {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 36, 'wght' 400;
+    font-size: 22px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .ranking-section {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 18, 'wght' 500;
+    font-size: 17px;
+  }
+  .ranking-district {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+  }
+  .ranking-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-align: right;
+  }
+  .util-bar {
+    height: 6px; background: var(--rule); position: relative; border-radius: 0;
+  }
+  .util-bar-fill { height: 100%; background: var(--accent); }
+  .util-bar-fill.high { background: var(--warn); }
+  .util-bar-fill.full { background: var(--warn); }
+
+  /* === HEATMAP === */
+  .heatmap {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 200px repeat(5, 1fr);
+    border: 1px solid var(--rule);
+  }
+  .heatmap-h {
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--rule);
+    text-align: center;
+  }
+  .heatmap-h.first { text-align: left; }
+  .heatmap-cell {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-align: right;
+    position: relative;
+  }
+  .heatmap-cell:first-child {
+    border-left: none;
+    text-align: left;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 18, 'wght' 500;
+    font-size: 15px;
+  }
+  .heatmap-cell.h0 { background: rgba(30,58,95,0.04); }
+  .heatmap-cell.h1 { background: rgba(30,58,95,0.10); }
+  .heatmap-cell.h2 { background: rgba(30,58,95,0.20); }
+  .heatmap-cell.h3 { background: rgba(200,97,42,0.30); color: #4a2a10; }
+  .heatmap-cell.h4 { background: rgba(200,97,42,0.55); color: #fff; }
+
+  /* === DOTS / SCATTER === */
+  .scatter {
+    margin-top: 48px;
+    height: 400px;
+    border-left: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    padding: 16px;
+  }
+  .scatter-y, .scatter-x {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .scatter-y { left: -100px; top: 50%; transform: rotate(-90deg) translateX(50%); transform-origin: left; width: 120px; }
+  .scatter-x { bottom: -28px; left: 50%; transform: translateX(-50%); }
+  .scatter-dot {
+    position: absolute;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, 50%);
+    transition: transform 200ms ease;
+    cursor: pointer;
+    mix-blend-mode: multiply;
+    opacity: 0.7;
+  }
+  .scatter-dot:hover { transform: translate(-50%, 50%) scale(1.5); opacity: 1; }
+  .scatter-dot.large { width: 22px; height: 22px; }
+  .scatter-dot.huge { width: 32px; height: 32px; }
+  .scatter-label {
+    position: absolute;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 14, 'wght' 500;
+    font-size: 12px;
+    color: var(--ink);
+    pointer-events: none;
+    transform: translate(8px, -8px);
+  }
+
+  /* === FOOTNOTES === */
+  footer { padding: 60px 0 80px; border-top: 2px solid var(--ink); }
+  .colophon {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 14, 'wght' 300;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.65;
+    max-width: 600px;
+  }
+  .colophon a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin: 24px 0 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 12px 24px 14px 0;
+    margin-right: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab:hover:not(.active) { color: var(--ink-soft); }
+  .tab-panel { display: none; padding-top: 32px; }
+  .tab-panel.active { display: block; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 900px) {
+    .container { padding: 0 24px; }
+    .topline { grid-template-columns: repeat(2, 1fr); }
+    .callout { grid-template-columns: 1fr; }
+    .district-row { grid-template-columns: 140px 1fr 70px; }
+    .district-row .num-extra { display: none; }
+    .ranking { grid-template-columns: 32px 1fr 60px; gap: 8px; font-size: 12px; }
+    .ranking-district, .ranking-num.cap, .ranking-num.grid-col { display: none; }
+    .heatmap { grid-template-columns: 120px repeat(5, 1fr); font-size: 11px; }
+    .heatmap-cell { padding: 10px 8px; font-size: 11px; }
+    .heatmap-cell:first-child { font-size: 12px; }
+  }
+  @media (max-width: 600px) {
+    .topline { grid-template-columns: 1fr 1fr; }
+    .topline-value { font-size: 36px; }
+    .callout-num { font-size: 44px; }
+  }
+
+  /* Stagger animation on load */
+  .reveal { opacity: 0; transform: translateY(8px); transition: opacity 600ms ease, transform 600ms ease; }
+  .reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== MASTHEAD ===== -->
+  <header class="masthead">
+    <div class="masthead-row">
+      <span>Kerala State Electricity Board · Web Self Service</span>
+      <span>Vol. I — Apr 2026</span>
+    </div>
+  </header>
+
+  <h1 class="masthead-title">A Field Survey of <em>Kerala's</em> <br>Distribution Transformers</h1>
+
+  <p class="masthead-deck">
+    A complete inventory of all 102,880 distribution transformers across 14 districts and 776 sections —
+    measuring how much rooftop solar capacity has been claimed, and how much remains.
+  </p>
+
+  <!-- ===== TOPLINE ===== -->
+  <div class="topline">
+    <div class="topline-cell">
+      <div class="topline-label">DTRs Surveyed</div>
+      <div class="topline-value num" id="kpi-dtrs">—</div>
+      <div class="topline-unit">Distribution Transformers</div>
+    </div>
+    <div class="topline-cell">
+      <div class="topline-label">Sections</div>
+      <div class="topline-value num" id="kpi-sections">—</div>
+      <div class="topline-unit">across 14 districts</div>
+    </div>
+    <div class="topline-cell">
+      <div class="topline-label">Total Capacity</div>
+      <div class="topline-value num" id="kpi-cap">—</div>
+      <div class="topline-unit">MW (90% of DTR rating)</div>
+    </div>
+    <div class="topline-cell">
+      <div class="topline-label">Utilisation</div>
+      <div class="topline-value num" id="kpi-util">—</div>
+      <div class="topline-unit">grid connected ÷ capacity</div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 1 — DISTRICTS ===== -->
+  <section>
+    <div class="section-tag">I. The Districts</div>
+    <h2 class="section-h">Where the <em>transformers</em> are.</h2>
+    <p class="section-lede">
+      Ernakulam dominates by every measure — most DTRs, most sections, most installed solar capacity, most
+      transformers already saturated. Wayanad sits at the opposite extreme. Below, each bar shows total
+      DTR capacity (light) overlaid with grid-connected solar (dark blue).
+    </p>
+
+    <div class="legend">
+      <span><i class="swatch-cap"></i> Total Capacity</span>
+      <span><i class="swatch-grid"></i> Grid Connected</span>
+    </div>
+
+    <div class="district-list" id="district-list"></div>
+  </section>
+
+  <!-- ===== SECTION 2 — KEY FINDINGS ===== -->
+  <section>
+    <div class="section-tag">II. Notable Findings</div>
+    <h2 class="section-h">Headroom <em>everywhere</em>, except where it isn't.</h2>
+    <p class="section-lede">
+      The state has used less than a fifth of what its low-voltage grid could absorb. But the
+      distribution is anything but uniform — pockets of saturation sit alongside vast unused capacity.
+    </p>
+
+    <div class="callout">
+      <div class="callout-cell">
+        <div class="callout-tag">Most Saturated District</div>
+        <div class="callout-num warn num" id="cb-saturated">—</div>
+        <div class="callout-text">DTRs at <strong>full capacity</strong> in Ernakulam — over four times the next-highest district. The Kochi metro grid is hitting its limits.</div>
+      </div>
+      <div class="callout-cell">
+        <div class="callout-tag">Largest Single Section</div>
+        <div class="callout-num accent num" id="cb-largest">—</div>
+        <div class="callout-text">Distribution transformers in <strong>Thrikkakkara</strong>, Ernakulam — by far the largest section, larger than 13 entire districts' average.</div>
+      </div>
+      <div class="callout-cell">
+        <div class="callout-tag">Untouched Inventory</div>
+        <div class="callout-num good num" id="cb-unused">—</div>
+        <div class="callout-text">DTRs across the state with <strong>zero solar connected</strong> — roughly one in three. The dormant majority of the network.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 3 — RANKINGS WITH TABS ===== -->
+  <section>
+    <div class="section-tag">III. Sectional Rankings</div>
+    <h2 class="section-h">The standout <em>sections</em>.</h2>
+    <p class="section-lede">
+      Three different ways to read the same data. By raw transformer count, by installed solar capacity,
+      and by utilisation rate — the same Ernakulam sections dominate two out of three.
+    </p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="dtrs">By DTR Count</button>
+      <button class="tab" data-tab="grid">By Solar Connected</button>
+      <button class="tab" data-tab="util">By Utilisation %</button>
+    </div>
+
+    <div class="tab-panel active" id="panel-dtrs">
+      <div id="ranking-dtrs"></div>
+    </div>
+    <div class="tab-panel" id="panel-grid">
+      <div id="ranking-grid"></div>
+    </div>
+    <div class="tab-panel" id="panel-util">
+      <div id="ranking-util"></div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 4 — UTILISATION HEATMAP ===== -->
+  <section>
+    <div class="section-tag">IV. Utilisation Profile</div>
+    <h2 class="section-h">How each district's DTRs are <em>occupied</em>.</h2>
+    <p class="section-lede">
+      Every DTR placed in one of five buckets, by how much of its capacity is currently feeding solar.
+      Darker shading = more transformers in that bucket. Orange highlights the saturated end.
+    </p>
+
+    <div class="heatmap" id="heatmap"></div>
+  </section>
+
+  <!-- ===== SECTION 5 — CAPACITY VS GRID ===== -->
+  <section>
+    <div class="section-tag">V. Capacity vs Connected</div>
+    <h2 class="section-h">A scatter of <em>districts</em>.</h2>
+    <p class="section-lede">
+      Each circle is a district, sized by total DTR count. Districts above the trend line have above-average
+      utilisation; those below are leaving capacity on the table. Hover to read.
+    </p>
+    <div class="scatter" id="scatter">
+      <div class="scatter-y">Grid Connected (MW) →</div>
+      <div class="scatter-x">Total Capacity (MW) →</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="colophon">
+      <p style="margin-bottom: 12px;">
+        Data: <a href="https://wss.kseb.in/selfservices/reCap" target="_blank">KSEB Self Service Portal</a>,
+        published under Regulation 14(2) of the KSERC Renewable Energy and Net Metering Regulations, 2020.
+        Snapshot: April 2026.
+      </p>
+      <p>
+        Capacity figures are 90% of distribution transformer rating, the regulatory ceiling for distributed
+        renewable interconnection. Utilisation = (grid connected ÷ 90% capacity), expressed as a percentage.
+      </p>
+    </div>
+  </footer>
+</div>
+
+<script>
+const DATA = {"state":{"totalDtrs":102880,"totalSections":776,"totalDistricts":14,"totalCapacity":10928817.0,"totalGrid":1945576.06,"totalFeasibility":179749.78000000003,"totalBalance":8805358.31,"overallUtilization":17.802256730989274,"fullCapDtrs":1024,"unusedDtrs":33661,"avgUtilDtr":null},"districts":[{"name":"ERNAKULAM","dtrs":14152,"sections":91,"capacity":1914996.0,"grid":377489.79000000004,"feasibility":46608.66,"balance":1491873.44,"utilization":19.712301748933157,"fullCapDtrs":453,"unusedDtrs":5436},{"name":"THRISSUR","dtrs":11149,"sections":76,"capacity":1118538.0,"grid":243738.1,"feasibility":20781.010000000002,"balance":854191.91,"utilization":21.790775101069432,"fullCapDtrs":164,"unusedDtrs":2967},{"name":"MALAPPURAM","dtrs":10483,"sections":87,"capacity":1010993.0,"grid":181360.18,"feasibility":11853.439999999999,"balance":817807.3,"utilization":17.938816589234545,"fullCapDtrs":29,"unusedDtrs":2958},{"name":"PALAKKAD","dtrs":8618,"sections":70,"capacity":849363.0,"grid":117800.73000000001,"feasibility":8828.58,"balance":722750.84,"utilization":13.869303230774122,"fullCapDtrs":19,"unusedDtrs":2879},{"name":"KOTTAYAM","dtrs":7982,"sections":59,"capacity":812554.0,"grid":127007.69,"feasibility":11404.28,"balance":674212.56,"utilization":15.630676853476816,"fullCapDtrs":43,"unusedDtrs":3078},{"name":"KOZHIKODE","dtrs":7942,"sections":69,"capacity":908432.0,"grid":134551.73,"feasibility":9410.97,"balance":764492.15,"utilization":14.811425621290311,"fullCapDtrs":14,"unusedDtrs":2531},{"name":"THIRUVANANTHAPURAM","dtrs":7467,"sections":80,"capacity":1011197.0,"grid":189695.27000000002,"feasibility":15417.079999999998,"balance":806309.1499999999,"utilization":18.75947713452473,"fullCapDtrs":73,"unusedDtrs":1909},{"name":"KANNUR","dtrs":7247,"sections":60,"capacity":715789.0,"grid":132536.78,"feasibility":11092.36,"balance":572214.21,"utilization":18.51618004747209,"fullCapDtrs":64,"unusedDtrs":2359},{"name":"KOLLAM","dtrs":6693,"sections":60,"capacity":639200.0,"grid":131314.96,"feasibility":15224.23,"balance":492704.22000000003,"utilization":20.543642052565705,"fullCapDtrs":48,"unusedDtrs":1511},{"name":"ALAPUZHA","dtrs":6087,"sections":51,"capacity":579913.0,"grid":136048.03,"feasibility":14019.890000000001,"balance":429884.68,"utilization":23.460075907937913,"fullCapDtrs":69,"unusedDtrs":1555},{"name":"PATHANAMTHITTA","dtrs":4499,"sections":38,"capacity":424867.0,"grid":73104.28,"feasibility":6094.54,"balance":345703.87,"utilization":17.20639164726844,"fullCapDtrs":17,"unusedDtrs":1321},{"name":"KASARGODE","dtrs":4337,"sections":33,"capacity":399425.0,"grid":60065.17999999999,"feasibility":5120.69,"balance":334406.34,"utilization":15.037911998497838,"fullCapDtrs":21,"unusedDtrs":1595},{"name":"IDUKKI","dtrs":3924,"sections":33,"capacity":348924.0,"grid":28990.7,"feasibility":2743.49,"balance":317201.81999999995,"utilization":8.308600153615114,"fullCapDtrs":9,"unusedDtrs":2269},{"name":"WAYANAD","dtrs":2300,"sections":18,"capacity":194626.0,"grid":11872.64,"feasibility":1150.56,"balance":181605.82,"utilization":6.100233267908706,"fullCapDtrs":1,"unusedDtrs":1293}],"topSectionsDtrs":[{"District":"ERNAKULAM","Section":"Thrikkakkara [5557]","dtrs":455,"capacity":106337,"grid":8406.55,"utilization":7.905573788991601},{"District":"ERNAKULAM","Section":"Vazhakulam [5584]","dtrs":351,"capacity":37982,"grid":8775.78,"utilization":23.10510241693434},{"District":"ERNAKULAM","Section":"Valayanchirangara [5596]","dtrs":327,"capacity":32104,"grid":3442.7,"utilization":10.723585846000498},{"District":"THRISSUR","Section":"Chalakkudy [5651]","dtrs":322,"capacity":34403,"grid":6794.73,"utilization":19.750399674446996},{"District":"ERNAKULAM","Section":"Angamaly [5579]","dtrs":307,"capacity":35223,"grid":5968.36,"utilization":16.944496493768277},{"District":"THRISSUR","Section":"Guruvayoor [5697]","dtrs":300,"capacity":35937,"grid":3786.56,"utilization":10.536661379636586},{"District":"THRISSUR","Section":"Ollur [5672]","dtrs":290,"capacity":32482,"grid":4610.14,"utilization":14.19290684071178},{"District":"ERNAKULAM","Section":"Kaloor [5545]","dtrs":288,"capacity":59356,"grid":8019.19,"utilization":13.510327515331221},{"District":"MALAPPURAM","Section":"Perinthalmanna [6562]","dtrs":288,"capacity":36464,"grid":5565.2,"utilization":15.262176393154892},{"District":"KANNUR","Section":"Kannur [6654]","dtrs":286,"capacity":37321,"grid":5729.84,"utilization":15.352857640470512},{"District":"ERNAKULAM","Section":"Kalamassery [5573]","dtrs":280,"capacity":37504,"grid":7027.8,"utilization":18.73880119453925},{"District":"KOTTAYAM","Section":"Kottayam East [4635]","dtrs":278,"capacity":40514,"grid":3915.4,"utilization":9.664313570617566},{"District":"KOTTAYAM","Section":"Ettumanur [4646]","dtrs":274,"capacity":33787,"grid":5739.07,"utilization":16.986030129931628},{"District":"WAYANAD","Section":"Kalpetta [6586]","dtrs":272,"capacity":24192,"grid":1398.79,"utilization":5.782035383597883},{"District":"ERNAKULAM","Section":"Perumbavoor [5583]","dtrs":266,"capacity":29621,"grid":5662.2,"utilization":19.115492387157758},{"District":"ERNAKULAM","Section":"College Ernakulam [5540]","dtrs":265,"capacity":59543,"grid":3432.55,"utilization":5.764825420284501},{"District":"ERNAKULAM","Section":"Girinagar [5542]","dtrs":264,"capacity":58883,"grid":7304.86,"utilization":12.405719817264744},{"District":"ERNAKULAM","Section":"Thrikkakkara West [5731]","dtrs":263,"capacity":51487,"grid":8332.45,"utilization":16.183599743624605},{"District":"KOTTAYAM","Section":"Kottayam Central [4634]","dtrs":261,"capacity":38090,"grid":3949.81,"utilization":10.369677080598583},{"District":"IDUKKI","Section":"Chithirapuram [5615]","dtrs":258,"capacity":21756,"grid":582.16,"utilization":2.67585953300239},{"District":"ERNAKULAM","Section":"Ernakulam Central [5546]","dtrs":255,"capacity":72875,"grid":4673.87,"utilization":6.413543739279588},{"District":"PALAKKAD","Section":"Sulthanpet [6517]","dtrs":255,"capacity":34418,"grid":3528.29,"utilization":10.251292928119007},{"District":"KASARGODE","Section":"Kasargode [6688]","dtrs":245,"capacity":27527,"grid":3492.13,"utilization":12.686199004613652},{"District":"KOTTAYAM","Section":"Thiruvalla [4617]","dtrs":242,"capacity":32731,"grid":5280.73,"utilization":16.133726436711374},{"District":"PATHANAMTHITTA","Section":"Thiruvalla [4617]","dtrs":242,"capacity":32731,"grid":5280.73,"utilization":16.133726436711374},{"District":"ERNAKULAM","Section":"Vengola [5585]","dtrs":239,"capacity":25281,"grid":4027.69,"utilization":15.931687828804241},{"District":"ERNAKULAM","Section":"Kurupampady [5588]","dtrs":236,"capacity":23304,"grid":2853.56,"utilization":12.244936491589426},{"District":"THRISSUR","Section":"Medical College(Peringandoor) [5714]","dtrs":235,"capacity":23705,"grid":2926.01,"utilization":12.343429656190679},{"District":"PALAKKAD","Section":"Kozhinjampara [6502]","dtrs":233,"capacity":23745,"grid":1816.2,"utilization":7.648768161718257},{"District":"KASARGODE","Section":"Cherkala [6689]","dtrs":231,"capacity":19656,"grid":3481.31,"utilization":17.711182336182336}],"topSectionsGrid":[{"District":"ERNAKULAM","Section":"Edappally [5544]","dtrs":218,"capacity":49316,"grid":10103.21,"utilization":20.486677751642468},{"District":"ERNAKULAM","Section":"Vazhakulam [5584]","dtrs":351,"capacity":37982,"grid":8775.78,"utilization":23.10510241693434},{"District":"ERNAKULAM","Section":"Thrikkakkara [5557]","dtrs":455,"capacity":106337,"grid":8406.55,"utilization":7.905573788991601},{"District":"ERNAKULAM","Section":"Thrikkakkara West [5731]","dtrs":263,"capacity":51487,"grid":8332.45,"utilization":16.183599743624605},{"District":"ERNAKULAM","Section":"Kaloor [5545]","dtrs":288,"capacity":59356,"grid":8019.19,"utilization":13.510327515331221},{"District":"ERNAKULAM","Section":"Aluva Town [5567]","dtrs":227,"capacity":29959,"grid":7453.56,"utilization":24.8792015754865},{"District":"ERNAKULAM","Section":"Palarivattom [5543]","dtrs":208,"capacity":42133,"grid":7337.22,"utilization":17.41442574703914},{"District":"ERNAKULAM","Section":"Girinagar [5542]","dtrs":264,"capacity":58883,"grid":7304.86,"utilization":12.405719817264744},{"District":"ERNAKULAM","Section":"Maradu [5550]","dtrs":194,"capacity":29414,"grid":7266.28,"utilization":24.703474535935268},{"District":"ERNAKULAM","Section":"Njarackkal [5566]","dtrs":137,"capacity":14273,"grid":7251.57,"utilization":50.80620752469698},{"District":"ERNAKULAM","Section":"Vyttila [5556]","dtrs":223,"capacity":41381,"grid":7240.28,"utilization":17.496628887653753},{"District":"ERNAKULAM","Section":"Thevakkal [5558]","dtrs":210,"capacity":26829,"grid":7183.98,"utilization":26.77692049647769},{"District":"ERNAKULAM","Section":"Kalamassery [5573]","dtrs":280,"capacity":37504,"grid":7027.8,"utilization":18.73880119453925},{"District":"THIRUVANANTHAPURAM","Section":"Ulloor [4517]","dtrs":104,"capacity":24990,"grid":6836.08,"utilization":27.355262104841938},{"District":"ERNAKULAM","Section":"Aluva West [5569]","dtrs":181,"capacity":27740,"grid":6808.04,"utilization":24.542321557317955},{"District":"THRISSUR","Section":"Chalakkudy [5651]","dtrs":322,"capacity":34403,"grid":6794.73,"utilization":19.750399674446996},{"District":"ERNAKULAM","Section":"Vennala [5732]","dtrs":185,"capacity":37116,"grid":6738.93,"utilization":18.156401551891367},{"District":"ERNAKULAM","Section":"Palluruthy [5559]","dtrs":125,"capacity":19502,"grid":6733.16,"utilization":34.525484565685574},{"District":"THIRUVANANTHAPURAM","Section":"Sreekariyam [4519]","dtrs":116,"capacity":19800,"grid":6346.39,"utilization":32.052474747474754},{"District":"ERNAKULAM","Section":"Vypin [5565]","dtrs":128,"capacity":16887,"grid":6337.16,"utilization":37.526854977201396}],"topSectionsUtil":[{"District":"ERNAKULAM","Section":"Njarackkal [5566]","dtrs":137,"capacity":14273,"grid":7251.57,"utilization":50.80620752469698},{"District":"ALAPUZHA","Section":"Muthukulam [5741]","dtrs":85,"capacity":7870,"grid":3795.79,"utilization":48.231130876747144},{"District":"ERNAKULAM","Section":"Kumbalangi [5561]","dtrs":48,"capacity":5670,"grid":2667.65,"utilization":47.048500881834215},{"District":"ERNAKULAM","Section":"Alangad [5737]","dtrs":72,"capacity":6205,"grid":2719.95,"utilization":43.8348106365834},{"District":"THIRUVANANTHAPURAM","Section":"Thirumala [4511]","dtrs":73,"capacity":12958,"grid":5665.99,"utilization":43.725806451612904},{"District":"ERNAKULAM","Section":"Moothakunnam [5608]","dtrs":57,"capacity":5588,"grid":2407.2999999999997,"utilization":43.079813886900496},{"District":"THRISSUR","Section":"Eriyad [5665]","dtrs":114,"capacity":10121,"grid":4272.42,"utilization":42.213417646477616},{"District":"ERNAKULAM","Section":"Mannam [5736]","dtrs":93,"capacity":9263,"grid":3857.17,"utilization":41.64061319227032},{"District":"THRISSUR","Section":"Perinjanam [5662]","dtrs":125,"capacity":12236,"grid":5005.8,"utilization":40.910428244524354},{"District":"ERNAKULAM","Section":"Varapuzha [5602]","dtrs":132,"capacity":12668,"grid":5182.13,"utilization":40.907246605620465},{"District":"ERNAKULAM","Section":"Udayamperoor [5549]","dtrs":111,"capacity":10458,"grid":4250.83,"utilization":40.646681965959075},{"District":"ERNAKULAM","Section":"Ezhikkara [5603]","dtrs":65,"capacity":5009,"grid":1960.6499999999999,"utilization":39.142543421840685},{"District":"ERNAKULAM","Section":"Chowara [5570]","dtrs":71,"capacity":7032,"grid":2717.37,"utilization":38.6429180887372},{"District":"ERNAKULAM","Section":"Amballoor [5552]","dtrs":70,"capacity":6294,"grid":2427.59,"utilization":38.56990784874484},{"District":"ERNAKULAM","Section":"Vypin [5565]","dtrs":128,"capacity":16887,"grid":6337.16,"utilization":37.526854977201396},{"District":"ERNAKULAM","Section":"Puthenvelikkara [5659]","dtrs":102,"capacity":9419,"grid":3519.71,"utilization":37.36819195243656},{"District":"THRISSUR","Section":"Puthenvelikkara [5659]","dtrs":102,"capacity":9419,"grid":3519.71,"utilization":37.36819195243656},{"District":"ERNAKULAM","Section":"North Paravur [5604]","dtrs":127,"capacity":15098,"grid":5608.49,"utilization":37.14723804477414},{"District":"ALAPUZHA","Section":"Kattanam [5528]","dtrs":91,"capacity":7936,"grid":2897.69,"utilization":36.51323084677419},{"District":"ALAPUZHA","Section":"Thattarambalam [5523]","dtrs":98,"capacity":8610,"grid":3134.72,"utilization":36.40789779326364}],"bucketsByDistrict":{"ALAPUZHA":{"low":3661,"unused":1555,"medium":518,"high":254,"full":99},"ERNAKULAM":{"low":6205,"unused":5436,"medium":1229,"high":771,"full":511},"IDUKKI":{"unused":2269,"low":1533,"medium":81,"high":28,"full":13},"KANNUR":{"low":4109,"unused":2359,"medium":470,"high":199,"full":110},"KASARGODE":{"low":2429,"unused":1595,"medium":186,"high":88,"full":39},"KOLLAM":{"low":4481,"unused":1511,"medium":465,"high":180,"full":56},"KOTTAYAM":{"low":4192,"unused":3078,"medium":454,"high":190,"full":68},"KOZHIKODE":{"low":4927,"unused":2531,"medium":326,"high":118,"full":40},"MALAPPURAM":{"low":6660,"unused":2958,"medium":604,"high":202,"full":59},"PALAKKAD":{"low":5285,"unused":2879,"medium":298,"high":115,"full":41},"PATHANAMTHITTA":{"low":2804,"unused":1321,"medium":249,"high":89,"full":36},"THIRUVANANTHAPURAM":{"low":4806,"unused":1909,"medium":472,"high":174,"full":106},"THRISSUR":{"low":6548,"unused":2967,"medium":993,"high":417,"full":224},"WAYANAD":{"unused":1293,"low":980,"medium":17,"full":5,"high":5}},"topDtrs":[{"District":"THIRUVANANTHAPURAM","Section":"Kulathoor [4520]","Transformer Name":"WINDS LT POLE EA-21  800 kVA","90% DTR Capacity (kW)":648,"Grid Connected (kW)":350.8,"Balance Available (kW)":297.2},{"District":"ERNAKULAM","Section":"Eroor [5733]","Transformer Name":"POTTAYIL  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":312.06,"Balance Available (kW)":46.94},{"District":"ERNAKULAM","Section":"Thripunithura [5548]","Transformer Name":"CSS OLD BUS STAND  990 kVA","90% DTR Capacity (kW)":801,"Grid Connected (kW)":310.3,"Balance Available (kW)":473.7},{"District":"THIRUVANANTHAPURAM","Section":"Pettah [4514]","Transformer Name":"PALLIMUKKU  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":297.78,"Balance Available (kW)":97.22},{"District":"ERNAKULAM","Section":"Thripunithura [5548]","Transformer Name":"SKYLINE RANCH-1  630 kVA","90% DTR Capacity (kW)":510,"Grid Connected (kW)":289.65,"Balance Available (kW)":185.35},{"District":"THIRUVANANTHAPURAM","Section":"Cantonment TVM [4506]","Transformer Name":"KP TRANS  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":278.0,"Balance Available (kW)":112.0},{"District":"THIRUVANANTHAPURAM","Section":"Peroorkada [4508]","Transformer Name":"G C NAGAR  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":265.77,"Balance Available (kW)":136.23},{"District":"THIRUVANANTHAPURAM","Section":"Manacaud [4501]","Transformer Name":"PARAVANKUNNU-1  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":261.5,"Balance Available (kW)":133.5},{"District":"THIRUVANANTHAPURAM","Section":"Thirumala [4511]","Transformer Name":"PAYALUMMOODU  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":250.56,"Balance Available (kW)":1.44},{"District":"THIRUVANANTHAPURAM","Section":"Peroorkada [4508]","Transformer Name":"SWATHY NAGER  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":247.71,"Balance Available (kW)":143.29},{"District":"THIRUVANANTHAPURAM","Section":"Sreekariyam [4519]","Transformer Name":"CHENTHY  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":239.53,"Balance Available (kW)":152.47},{"District":"THIRUVANANTHAPURAM","Section":"Manacaud [4501]","Transformer Name":"KAMALESWARAM-1  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":238.94,"Balance Available (kW)":148.06},{"District":"THIRUVANANTHAPURAM","Section":"Ulloor [4517]","Transformer Name":"CHETTIKUNNU-  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":238.84,"Balance Available (kW)":151.16},{"District":"ERNAKULAM","Section":"Vaduthala [5547]","Transformer Name":"CHATHIYATH  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":238.0,"Balance Available (kW)":14.0},{"District":"THIRUVANANTHAPURAM","Section":"Kudappanakkunnu [4676]","Transformer Name":"MATCH FACTORY  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":236.91,"Balance Available (kW)":1.09},{"District":"ERNAKULAM","Section":"Kaloor [5545]","Transformer Name":"SHENOY ROAD  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":236.49,"Balance Available (kW)":0.0},{"District":"ERNAKULAM","Section":"Vyttila [5556]","Transformer Name":"AYSHA BEEDI  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":236.08,"Balance Available (kW)":1.92},{"District":"THIRUVANANTHAPURAM","Section":"Pettah [4514]","Transformer Name":"KOLLUR  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":236.06,"Balance Available (kW)":4.94},{"District":"THIRUVANANTHAPURAM","Section":"Pettah [4514]","Transformer Name":"VANCHIYOOR COURT  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":235.5,"Balance Available (kW)":164.5},{"District":"THIRUVANANTHAPURAM","Section":"Pettah [4514]","Transformer Name":"ANAYARA  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":230.88,"Balance Available (kW)":168.12},{"District":"ERNAKULAM","Section":"Kaloor [5545]","Transformer Name":"CHURCH  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":230.72,"Balance Available (kW)":164.98},{"District":"ERNAKULAM","Section":"Ernakulam Central [5546]","Transformer Name":"PANAKKAPADAM-OD  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":229.04,"Balance Available (kW)":156.96},{"District":"KASARGODE","Section":"Chattanchal [6772]","Transformer Name":"MIC  250 kVA","90% DTR Capacity (kW)":202,"Grid Connected (kW)":228.08,"Balance Available (kW)":0.0},{"District":"THIRUVANANTHAPURAM","Section":"Kesavadasapuram [4516]","Transformer Name":"MARAPPALAM  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":228.04,"Balance Available (kW)":152.96},{"District":"THIRUVANANTHAPURAM","Section":"Manacaud [4501]","Transformer Name":"KAMALESWARAM-2  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":227.78,"Balance Available (kW)":162.22},{"District":"THIRUVANANTHAPURAM","Section":"Vattiyoorkavu [4509]","Transformer Name":"ARAPPURA  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":226.82,"Balance Available (kW)":0.18},{"District":"KOZHIKODE","Section":"Karaparamba [6598]","Transformer Name":"PALATTU THAZHAM  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":226.65,"Balance Available (kW)":20.35},{"District":"THIRUVANANTHAPURAM","Section":"Kesavadasapuram [4516]","Transformer Name":"VIKRAMAPURAM  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":225.72,"Balance Available (kW)":8.28},{"District":"THIRUVANANTHAPURAM","Section":"Thirumala [4511]","Transformer Name":"ARAYALLOOR  500 kVA","90% DTR Capacity (kW)":405,"Grid Connected (kW)":225.1,"Balance Available (kW)":157.9},{"District":"ERNAKULAM","Section":"Edappally [5544]","Transformer Name":"PALACE  315 kVA","90% DTR Capacity (kW)":255,"Grid Connected (kW)":224.6,"Balance Available (kW)":0.4}]};
+
+const fmt = n => n.toLocaleString('en-IN');
+const fmtMW = kw => (kw / 1000).toFixed(0);
+const fmtPct = p => p.toFixed(1) + '%';
+
+// ===== TOPLINE =====
+document.getElementById('kpi-dtrs').textContent = fmt(DATA.state.totalDtrs);
+document.getElementById('kpi-sections').textContent = fmt(DATA.state.totalSections);
+document.getElementById('kpi-cap').textContent = fmtMW(DATA.state.totalCapacity);
+document.getElementById('kpi-util').textContent = DATA.state.overallUtilization.toFixed(1) + '%';
+
+// ===== DISTRICT BARS =====
+const maxCap = Math.max(...DATA.districts.map(d => d.capacity));
+const districtList = document.getElementById('district-list');
+DATA.districts.forEach((d, i) => {
+  const capPct = (d.capacity / maxCap) * 100;
+  const gridPct = (d.grid / maxCap) * 100;
+  const row = document.createElement('div');
+  row.className = 'district-row reveal';
+  row.style.transitionDelay = (i * 30) + 'ms';
+  row.innerHTML = `
+    <div class="district-name"><span class="district-rank num">${String(i+1).padStart(2,'0')}</span>${d.name.charAt(0) + d.name.slice(1).toLowerCase()}</div>
+    <div class="district-bar">
+      <div class="district-bar-fill" style="width: ${capPct}%"></div>
+      <div class="district-bar-grid" style="width: ${gridPct}%"></div>
+    </div>
+    <div class="district-num">${fmt(d.dtrs)}<small>DTRs</small></div>
+    <div class="district-num num-extra">${d.sections}<small>sections</small></div>
+    <div class="district-num">${d.utilization.toFixed(1)}%<small>util</small></div>
+  `;
+  districtList.appendChild(row);
+});
+
+// ===== CALLOUTS =====
+const ernakulam = DATA.districts.find(d => d.name === 'ERNAKULAM');
+document.getElementById('cb-saturated').textContent = fmt(ernakulam.fullCapDtrs);
+document.getElementById('cb-largest').textContent = fmt(DATA.topSectionsDtrs[0].dtrs);
+document.getElementById('cb-unused').textContent = fmt(DATA.state.unusedDtrs);
+
+// ===== RANKINGS =====
+function renderRanking(target, list, valueKey, valueFmt, suffix) {
+  const root = document.getElementById(target);
+  const max = Math.max(...list.map(s => s.utilization));
+  list.slice(0, 20).forEach((s, i) => {
+    const utilCapped = Math.min(s.utilization, 100);
+    const klass = s.utilization >= 90 ? 'full' : s.utilization >= 50 ? 'high' : '';
+    const row = document.createElement('div');
+    row.className = 'ranking';
+    row.innerHTML = `
+      <div class="ranking-rank">${String(i+1).padStart(2,'0')}</div>
+      <div>
+        <div class="ranking-section">${s.Section.replace(/\s*\[\d+\]\s*$/,'')}</div>
+        <div class="ranking-district">${s.District}</div>
+      </div>
+      <div class="util-bar"><div class="util-bar-fill ${klass}" style="width:${utilCapped}%"></div></div>
+      <div class="ranking-num cap">${fmt(s.dtrs)}</div>
+      <div class="ranking-num grid-col">${(s.grid/1000).toFixed(1)} MW</div>
+      <div class="ranking-num">${valueFmt(s[valueKey])}${suffix||''}</div>
+    `;
+    root.appendChild(row);
+  });
+}
+
+renderRanking('ranking-dtrs', DATA.topSectionsDtrs, 'dtrs', fmt, '');
+renderRanking('ranking-grid', DATA.topSectionsGrid, 'grid', g => (g/1000).toFixed(2), ' MW');
+renderRanking('ranking-util', DATA.topSectionsUtil, 'utilization', u => u.toFixed(1), '%');
+
+// ===== TABS =====
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== HEATMAP =====
+const buckets = ['unused', 'low', 'medium', 'high', 'full'];
+const bucketLabels = ['Unused (0%)', 'Low (0–50%)', 'Med (50–70%)', 'High (70–90%)', 'Full (>90%)'];
+const heatmap = document.getElementById('heatmap');
+
+// Header row
+heatmap.innerHTML = '<div class="heatmap-h first">District</div>' +
+  bucketLabels.map(l => `<div class="heatmap-h">${l}</div>`).join('');
+
+// Find max per bucket for normalisation
+const maxPerBucket = buckets.map(b =>
+  Math.max(...DATA.districts.map(d => DATA.bucketsByDistrict[d.name][b] || 0))
+);
+
+DATA.districts.forEach(d => {
+  const cells = DATA.bucketsByDistrict[d.name];
+  const dn = d.name.charAt(0) + d.name.slice(1).toLowerCase();
+  let row = `<div class="heatmap-cell">${dn}</div>`;
+  buckets.forEach((b, i) => {
+    const v = cells[b] || 0;
+    const ratio = maxPerBucket[i] ? v / maxPerBucket[i] : 0;
+    let cls = 'h0';
+    if (ratio > 0.75) cls = 'h4';
+    else if (ratio > 0.5) cls = 'h3';
+    else if (ratio > 0.25) cls = 'h2';
+    else if (ratio > 0) cls = 'h1';
+    row += `<div class="heatmap-cell ${cls}">${fmt(v)}</div>`;
+  });
+  heatmap.innerHTML += row;
+});
+
+// ===== SCATTER =====
+const scatter = document.getElementById('scatter');
+const scatterMaxX = Math.max(...DATA.districts.map(d => d.capacity));
+const scatterMaxY = Math.max(...DATA.districts.map(d => d.grid));
+const dtrMin = Math.min(...DATA.districts.map(d => d.dtrs));
+const dtrMax = Math.max(...DATA.districts.map(d => d.dtrs));
+
+DATA.districts.forEach(d => {
+  const x = (d.capacity / scatterMaxX) * 92 + 4; // % from left
+  const y = 100 - ((d.grid / scatterMaxY) * 88 + 6); // % from top (inverted)
+  const norm = (d.dtrs - dtrMin) / (dtrMax - dtrMin);
+  const sizeClass = norm > 0.6 ? 'huge' : norm > 0.25 ? 'large' : '';
+  const dot = document.createElement('div');
+  dot.className = 'scatter-dot ' + sizeClass;
+  dot.style.left = x + '%';
+  dot.style.bottom = (100 - y) + '%';
+  dot.title = `${d.name}: ${fmt(d.dtrs)} DTRs, ${fmtMW(d.capacity)} MW capacity, ${fmtMW(d.grid)} MW grid (${d.utilization.toFixed(1)}%)`;
+  scatter.appendChild(dot);
+
+  // Label major districts only
+  if (d.dtrs > 6000 || d.dtrs < 3000) {
+    const lab = document.createElement('div');
+    lab.className = 'scatter-label';
+    lab.style.left = x + '%';
+    lab.style.bottom = (100 - y) + '%';
+    lab.textContent = d.name.charAt(0) + d.name.slice(1).toLowerCase();
+    scatter.appendChild(lab);
+  }
+});
+
+// Trend line (simple linear regression)
+const xs = DATA.districts.map(d => d.capacity);
+const ys = DATA.districts.map(d => d.grid);
+const n = xs.length;
+const meanX = xs.reduce((a,b)=>a+b,0)/n;
+const meanY = ys.reduce((a,b)=>a+b,0)/n;
+let num = 0, den = 0;
+xs.forEach((x, i) => { num += (x-meanX)*(ys[i]-meanY); den += (x-meanX)**2; });
+const slope = num/den;
+const intercept = meanY - slope*meanX;
+
+const trendSvg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+trendSvg.setAttribute('style', 'position:absolute; inset:0; pointer-events:none;');
+trendSvg.setAttribute('preserveAspectRatio','none');
+trendSvg.setAttribute('viewBox','0 0 100 100');
+const x1 = 4, y1 = (intercept + slope * (scatterMaxX*0.04)) / scatterMaxY * 88 + 6;
+const x2 = 96, y2 = (intercept + slope * scatterMaxX) / scatterMaxY * 88 + 6;
+trendSvg.innerHTML = `<line x1="${x1}" y1="${100-y1}" x2="${x2}" y2="${100-y2}"
+  stroke="rgba(20,17,15,0.25)" stroke-width="0.4" stroke-dasharray="1,1" vector-effect="non-scaling-stroke"/>`;
+scatter.appendChild(trendSvg);
+
+// ===== REVEAL ANIMATION =====
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// On load, immediately reveal toplines
+window.addEventListener('load', () => {
+  setTimeout(() => document.querySelectorAll('.reveal').forEach(el => el.classList.add('in')), 100);
+});
+</script>
+</body>
+</html>
